@@ -55,9 +55,15 @@ describe("The Student endpoint", () => {
     expect({
       firstName: response.body.firstName,
       lastName: response.body.lastName,
+      groupName: response.body.groupName,
+      role: response.body.role,
+      expectedSalary: response.body.expectedSalary,
     }).toEqual({
       firstName: testStudent.firstName,
       lastName: testStudent.lastName,
+      groupName: testStudent.groupName,
+      role: testStudent.role,
+      expectedSalary: testStudent.expectedSalary,
     });
   }, 20000);
 
@@ -82,6 +88,19 @@ describe("The Student endpoint", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toBeDefined();
+    expect({
+      firstName: response.body[0].firstName,
+      lastName: response.body[0].lastName,
+      groupName: response.body[0].groupName,
+      role: response.body[0].role,
+      expectedSalary: response.body[0].expectedSalary,
+    }).toEqual({
+      firstName: testStudent.firstName,
+      lastName: testStudent.lastName,
+      groupName: testStudent.groupName,
+      role: testStudent.role,
+      expectedSalary: testStudent.expectedSalary,
+    });
   });
 
   // GET ROUTE SAD PATH
