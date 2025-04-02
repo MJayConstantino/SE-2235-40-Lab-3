@@ -54,6 +54,7 @@ router.put('/:id', async (req: Request, res: Response) => {
       where: { id: Number(req.params.id) },
       data: {
         ...data,
+        updatedAt: new Date(),
         expectedDateOfDefense: new Date(data.expectedDateOfDefense),
       },
     });
