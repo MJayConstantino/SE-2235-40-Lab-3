@@ -11,7 +11,7 @@
    ```
 
 3. **Create a test environment file (.env.test):**  
-   In the `/backend` folder, create a file named `.env.test` with the following contents. You can obtain your **DATABASE_URL** and **DIRECT_URL** from Supabase Connect:
+   In the `/backend` folder, create a file named `.env.test` with the following contents. You can obtain your **DATABASE_URL** and **DIRECT_URL** from Supabase Connect (ORMs):
    ```dotenv
    NODE_ENV=test
    DATABASE_URL=""
