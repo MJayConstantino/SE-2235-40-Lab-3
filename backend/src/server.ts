@@ -1,12 +1,14 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import dotenvFlow from 'dotenv-flow';
 import { PrismaClient } from "@prisma/client";
 import colorRoutes from "./routes/color";
 import employeeRoutes from "./routes/employee";
 import studentRoutes from "./routes/student";
 
 dotenv.config();
+dotenvFlow.config();
 const app = express();
 export const prisma = new PrismaClient();
 
