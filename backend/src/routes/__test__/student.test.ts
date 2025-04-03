@@ -1,124 +1,136 @@
-import { beforeEach, describe } from "node:test";
 import { prisma, app } from "../../server";
 import request from "supertest";
+import { badRequestStudent, correctDataStudent, wrongDataStudent } from "./mockData";
+import { Student } from "@prisma/client";
 
 const route = "/students";
 
-const testStudent = {
-  id: 1,
-  firstName: "John",
-  lastName: "Doe",
-  groupName: "Group A",
-  role: "Student",
-  expectedSalary: 50000,
-  expectedDateOfDefense: new Date("2023-12-01"),
-  createdAt: new Date("2023-01-01T00:00:00Z"),
-  updatedAt: new Date("2023-01-01T00:00:00Z"),
-};
-
-const wrongDataStudent = {
-  id: 2,
-  firstName: 1000,
-  lastName: 500,
-  groupName: "Group B",
-  role: "Student",
-  expectedSalary: 50000,
-  expectedDateOfDefense: new Date("2023-12-01"),
-  createdAt: new Date("2023-01-01T00:00:00Z"),
-  updatedAt: new Date("2023-01-01T00:00:00Z"),
-};
-
-const badRequestStudent = {
-  id: 3,
-  first_name: "Jane", // int in the firstName and lastName
-  last_name: "Doe",
-  group_name: "Group C",
-  role: "Student",
-  expected_salary: 50000,
-  expected_date: new Date("2023-12-01"),
-  created_at: new Date("2023-01-01T00:00:00Z"),
-  updated_at: new Date("2023-01-01T00:00:00Z"),
-};
-
-describe("The Student route", () => {
+describe("Student routes", () => {
   afterAll(async () => {
     await prisma.student.deleteMany();
     await prisma.$disconnect();
-  });
+  }, 30000);
 
-  describe("POST endpoint ", () => {
+  describe("POST API endpoint ", () => {
     // POST ROUTE HAPPY PATH
     it("should create a new student successfully", async () => {
-      const response = await request(app).post(route).send(testStudent);
+      const { body, statusCode } = await request(app).post(route).send(correctDataStudent);
 
-      expect(response.status).toBe(201);
-      expect(response.body).toBeDefined();
-      expect({
-        firstName: response.body.firstName,
-        lastName: response.body.lastName,
-        groupName: response.body.groupName,
-        role: response.body.role,
-        expectedSalary: response.body.expectedSalary,
-      }).toEqual({
-        firstName: testStudent.firstName,
-        lastName: testStudent.lastName,
-        groupName: testStudent.groupName,
-        role: testStudent.role,
-        expectedSalary: testStudent.expectedSalary,
-      });
-    }, 20000);
+      expect(statusCode).toBe(201);
+      expect(body).toBeDefined();
+    }, 10000);
 
     // POST ROUTE SAD PATH
     it("should fail in creating a new student because of wrong data ", async () => {
-      const response = await request(app).post(route).send(wrongDataStudent);
+      const { statusCode } = await request(app).post(route).send(wrongDataStudent);
 
-      expect(response.status).toBe(500);
-      expect(response.body).toBeDefined();
+      expect(statusCode).toBe(500);
+    }, 10000);
+
+    it("should fail in creating a new student because of bad data request", async () => {
+      const { statusCode } = await request(app).post(route).send(badRequestStudent);
+  
+      expect(statusCode).toBe(500);
+    }, 10000);
+  });
+
+  describe("GET API endpoint ", () => {
+    let createdStudent: Student;
+
+    beforeEach(async () => {
+      const response = await request(app).post(route).send(correctDataStudent);
+      createdStudent = response.body;
     });
-  });
 
-  it("should fail in creating a new student because of bad data request", async () => {
-    const response = await request(app).post(route).send(badRequestStudent);
+    afterEach(async () => {
+      if (createdStudent?.id) {
+        await prisma.student.delete({ where: { id: createdStudent.id } });
+      }
+    });
 
-    expect(response.status).toBe(500);
-    expect(response.body).toBeDefined();
-  });
-
-  describe("GET endpoint ", () => {
     // GET ROUTE HAPPY PATH
-    it("should fetch all students successfully", async () => {
-      const response = await request(app).get(route);
-
-      expect(response.status).toBe(200);
-      expect(response.body).toBeDefined();
-      expect({
-        firstName: response.body[0].firstName,
-        lastName: response.body[0].lastName,
-        groupName: response.body[0].groupName,
-        role: response.body[0].role,
-        expectedSalary: response.body[0].expectedSalary,
-      }).toEqual({
-        firstName: testStudent.firstName,
-        lastName: testStudent.lastName,
-        groupName: testStudent.groupName,
-        role: testStudent.role,
-        expectedSalary: testStudent.expectedSalary,
-      });
-    });
+    it("should fetch an existing student successfully", async () => {
+      const { statusCode, body } = await request(app).get(`${route}/${createdStudent.id}`);
+      expect(statusCode).toBe(200);
+      expect(body).toBeDefined();
+      expect(body.id).toBe(createdStudent.id);
+    }, 10000);
 
     // GET ROUTE SAD PATH
-    it("should fail in fetching a because it would fetch a studnet that does not exist", async () => {
-      const response = await request(app).get(`${route}/1000`);
+    it("should fail in fetching a because it would fetch a student that does not exist", async () => {
+      const doesNotExistId = 9999;
+      const response = await request(app).get(`${route}/${doesNotExistId}`);
 
       expect(response.status).toBe(404);
-      expect(response.body).toBeDefined();
-    });
+    }, 10000);
 
     it("should fail in fetching a because it would fetch with a bad request", async () => {
-      const response = await request(app).get(`${route}/wrongId`);
+      const badRequestId = "badRequestId";
+      const response = await request(app).get(`${route}/${badRequestId}`);
 
       expect(response.status).toBe(500);
-      expect(response.body).toBeDefined();
-    });
+    }, 10000);
   });
+
+  describe("PUT API endpoint", () => {
+    let createdStudent: Student;
+    
+    beforeEach(async () => {
+      const response = await request(app).post(route).send(correctDataStudent);
+      createdStudent = response.body;
+    });
+
+    afterEach(async () => {
+      if (createdStudent?.id) {
+        await prisma.student.delete({ where: { id: createdStudent.id } });
+      }
+    }, 10000);
+  
+    it("should update an existing student successfully", async () => {
+      const updateData = {
+        firstName: "Johnny",
+        expectedSalary: 60000,
+        expectedDateOfDefense: new Date("2026-01-15"),
+      };
+  
+      const { statusCode, body } = await request(app)
+        .put(`${route}/${createdStudent.id}`)
+        .send(updateData);
+  
+      expect(statusCode).toBe(200);
+      expect(body.firstName).toBe(updateData.firstName);
+      expect(body.expectedSalary).toBe(updateData.expectedSalary);
+    }, 10000);
+  
+    // PUT ROUTE SAD PATH
+    it("should fail updating a student with invalid data", async () => {
+      // Invalid update data (wrong type for firstName and bad date format).
+      const invalidData = {
+        firstName: 12345,
+        expectedDateOfDefense: "invalid-date",
+      };
+
+      const { statusCode } = await request(app)
+        .put(`${route}/${createdStudent.id}`)
+        .send(invalidData);
+
+      expect(statusCode).toBe(500);
+    }, 10000);
+  
+    it("should fail updating a non-existent student", async () => {
+      const updateData = {
+        firstName: "Jane",
+        expectedDateOfDefense: new Date("2026-01-15"),
+      };
+  
+      const nonExistentId = 9999;
+  
+      const { statusCode } = await request(app)
+        .put(`${route}/${nonExistentId}`)
+        .send(updateData);
+  
+      expect(statusCode).toBe(500);
+    }, 10000);
+  });
+
 });

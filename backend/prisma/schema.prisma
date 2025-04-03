@@ -17,15 +17,15 @@ model Color {
 }
 
 model Student {
-  id                   Int      @id @default(autoincrement())
-  firstName           String
-  lastName            String
-  groupName           String
-  role                String
-  expectedSalary      Float
+  id                    Int      @id @default(autoincrement())
+  firstName             String
+  lastName              String
+  groupName             String
+  role                  String
+  expectedSalary        Float
   expectedDateOfDefense DateTime
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @default(now()) @updatedAt
 
   @@map("students")
 }
